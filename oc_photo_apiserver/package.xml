@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>oc_photo_apiserver</name>
+  <version>0.0.0</version>
+  <description>ROSの画像トピックの受信を待機し、画像トピックを受け取るとその画像をディレクトリに保存する。また、その画像
+  FastAPI経由でアクセスできるようにしたもの。</description>
+  <maintainer email="takuchanapp@gmail.com">tk</maintainer>
+  <license>TODO: License declaration</license>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <exec_depend>python3</exec_depend>
+  <exec_depend>fastapi</exec_depend>
+  <exec_depend>uvicorn</exec_depend>
+  <exec_depend>opencv-python</exec_depend>
+  <exec_depend>cv_bridge</exec_depend>
+
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
