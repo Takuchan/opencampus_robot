@@ -1,23 +1,39 @@
-name: Pylint
+name: Python Lint Check
 
-on: [push]
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.9", "3.10"]
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pylint
-    - name: Analysing the code with pylint
-      run: |
-        pylint $(git ls-files '*.py')
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install pylint
+        run: |
+          pip install pylint
+
+      - name: Lint Python files in ROS2 packages
+        run: |
+          # ROS2パッケージ(例: oc_megarover_bringup, oc_photo_apiserver)配下の .py ファイルを検索
+          FILES=$(find * -type f -name '*.py')
+          if [ -z "$FILES" ]; then
+            echo "No Python files found."
+            exit 0  # Pythonファイルが無い場合はエラーではなく終了
+          fi
+
+          echo "=== Linting the following Python files ==="
+          echo "$FILES"
+          echo "=========================================="
+
+          # pylint実行
+          pylint $FILES
