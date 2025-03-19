@@ -1,0 +1,7 @@
+int32 person_index_from_right  # 右から何番目の人を選択するか（1始まり）
+float32 max_distance          # この距離（メートル）以内の人のみを対象とする
+---
+bool success                  # 指定条件の人物が見つかったかどうか
+float32 selected_person_depth # 選択された人物までの距離
+int32 x_center               # 選択された人物のx座標（画像中心）
+int32 y_center               # 選択された人物のy座標（画像中心）
