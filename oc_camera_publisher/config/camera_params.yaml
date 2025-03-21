@@ -1,0 +1,7 @@
+camera_publisher:
+  ros__parameters:
+    camera_id: 0
+    width: 1280
+    height: 720
+    fps: 30
+    topic_name: "/oc/image/image_raw"
