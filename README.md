@@ -1,4 +1,4 @@
-起動メモ
+心が折れそうなときに研究室におれそうになる、俺用のコマンド
 ```
 ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0 -v4
 ```
@@ -8,7 +8,23 @@ ros2 launch megarover3_bringup robot.launch.py
 ```
 ros2 launch urg_node2 urg_node2.launch.py
 ```
-
+```
+ros2 run oc_megarover_bringup bringup
+```
+## マップ作成
+マップを作成したい場合
+```
+ros2 launch slam_toolbox online_async_launch.py
+```
+保存時
+```
+ros2 run nav2_map_server map_saver_cli -f ~/map
+```
+## ナビゲーション
+ナビゲーションのローンチを行う
+```
+ros2 launch nav2_bringup bringup_launch.py use_sim_time:=false map:=/home/i2lab/ros2_ws/src/opencampus_robot/oc_megarover_bringup/maps/map.yaml params_file:=/home/i2lab/ros2_ws/src/opencampus_robot/oc_megarover_bringup/param/navigation_param.yaml
+```
 
 
 # 自動記念撮影ロボットシステム 🚀📸
