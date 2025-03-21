@@ -13,6 +13,8 @@ setup(
             ['resource/' + package_name]),
         (os.path.join('share', package_name, 'launch'), glob('launch/*.py')),
         (os.path.join('share', package_name,'config'), [f'param/navigation_param.yaml']),  
+        (os.path.join('share', package_name,'maps'), [f'maps/map.yaml']),  
+        (os.path.join('share', package_name,'maps'), [f'maps/map.pgm']),  
 
 
         ('share/' + package_name, ['package.xml']),
