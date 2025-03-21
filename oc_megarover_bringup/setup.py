@@ -14,6 +14,7 @@ setup(
         (os.path.join('share', package_name, 'launch'), glob('launch/*.py')),
         (os.path.join('share', package_name,'config'), [f'param/navigation_param.yaml']),  
 
+
         ('share/' + package_name, ['package.xml']),
     ],
     install_requires=['setuptools'],
