@@ -1,6 +1,9 @@
 from setuptools import find_packages, setup
+import os
+from glob import glob
 
-package_name = 'oc_recognition_yolo'
+
+package_name = 'oc_fl_nav2_helper'
 
 setup(
     name=package_name,
@@ -10,6 +13,9 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+
+        (os.path.join('share', package_name, 'launch'), glob('launch/*.py')),
+
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -20,8 +26,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'yolov11_publisher = oc_recognition_yolo.yolov11_publisher:main',
-            'open3d_sample = oc_recognition_yolo.open3d_sample:main'
+            'fl_scanconverter = oc_fl_nav2_helper.fl_scanconverter:main'
         ],
     },
 )
