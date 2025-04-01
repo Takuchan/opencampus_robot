@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'yolov11_publisher = oc_recognition_yolo.yolov11_publisher:main'
+            'yolov11_publisher = oc_recognition_yolo.yolov11_publisher:main',
+            'open3d_sample = oc_recognition_yolo.open3d_sample:main'
         ],
     },
 )
