@@ -29,7 +29,7 @@ ros2 run nav2_map_server map_saver_cli -f ~/map
 ## ナビゲーション
 ナビゲーションのローンチを行う
 ```
-ros2 launch nav2_bringup bringup_launch.py use_sim_time:=false map:=/home/i2lab/ros2_ws/src/opencampus_robot/oc_megarover_bringup/maps/map.yaml params_file:=/home/i2lab/ros2_ws/src/opencampus_robot/oc_megarover_bringup/param/navigation_param.yaml
+ros2 launch nav2_bringup bringup_launch.py use_sim_time:=false map:=/home/tk/ros2_ws/src/opencampus_robot/oc_megarover_bringup/maps/map.yaml params_file:=/home/tk/ros2_ws/src/opencampus_robot/oc_megarover_bringup/param/nav2_param.yaml
 ```
 
 
