@@ -12,6 +12,7 @@ ODOMの発行
 ```
 ros2 launch megarover3_bringup robot.launch.py
 ```
+url_node2を確認する
 ```
 ros2 launch urg_node2 urg_node2.launch.py
 ```
@@ -31,7 +32,11 @@ ros2 run nav2_map_server map_saver_cli -f ~/map
 ## ナビゲーション
 ナビゲーションのローンチを行う
 ```
-ros2 launch nav2_bringup bringup_launch.py use_sim_time:=false map:=/home/tk/ros2_ws/src/opencampus_robot/oc_megarover_bringup/maps/map.yaml params_file:=/home/tk/ros2_ws/src/opencampus_robot/oc_megarover_bringup/param/nav2_param.yaml
+ros2 launch nav2_bringup bringup_launch.py \
+  map:=/home/tk/ros2_ws/src/opencampus_robot/oc_megarover_bringup/maps/map.yaml \
+  params_file:=/home/tk/ros2_ws/src/opencampus_robot/oc_megarover_bringup/param/nav2_params.yaml \
+  use_sim_time:=false
+
 ```
 
 
