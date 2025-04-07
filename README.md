@@ -20,7 +20,7 @@ ros2 run oc_megarover_bringup bringup
 ## マップ作成
 マップを作成したい場合
 ```
-ros2 launch slam_toolbox online_async_launch.py
+ros2 launch slam_toolbox online_async_launch.py params_file:=/home/tk/ros2_ws/src/opencampus_robot/oc_megarover_bringup/param/mapper_params_online_sync.yaml
 ```
 保存時
 ```
