@@ -3,7 +3,7 @@
 ros2 launch livox_ros_driver2 msg_MID360_launch.py 
 ```
 ```
-ros2 launch oc_fl_nav2_helper fl_nav2.launch.py 
+ros2 launch oc_livox_to_pointcloud2 livox_converter.launch.py
 ```
 ```
 ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0 -v4
