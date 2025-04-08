@@ -18,17 +18,18 @@ def generate_launch_description():
         executable='static_transform_publisher',
         name='tf_livox_publisher',
         arguments=[
-            '0.0',    # X (meters)
+            '-0.25',    # X (meters)
             '0.0',    # Y (meters)
             '0.5',    # Z (meters) - 高さに合わせて調整
-            '1.57',  # Roll (radians) ≒ 90度
+            '0',  # Roll (radians) ≒ 90度
             '0',     # Pitch (radians)
             '0',  # Yaw (radians) ≒ 180度  ←ここを追加！
-            'base_link',
+            'base_footprint',
             'mid360'
         ],
         output='screen'
     )
+
     
     # PointCloud2変換ノード
     pointcloud_node = Node(
