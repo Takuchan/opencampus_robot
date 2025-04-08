@@ -1,4 +1,5 @@
 #include "livox_to_pointcloud2.hpp"
+#include <cmath>
 
 using namespace std::chrono_literals;
 
@@ -13,6 +14,7 @@ void LivoxToPointCloud2::callback(const livox_ros_driver2::msg::CustomMsg::Share
 {
     sensor_msgs::msg::PointCloud2 output;
     output.header = msg->header;
+    output.header.frame_id = "mid360";  // フレームIDを設定
     output.fields.resize(6);
 
     output.fields[0].name = "x";
@@ -46,24 +48,39 @@ void LivoxToPointCloud2::callback(const livox_ros_driver2::msg::CustomMsg::Share
     output.fields[5].count = 1;
 
     output.point_step = 18;
-    output.row_step = output.point_step * msg->point_num;
-    output.data.resize(output.row_step);
-
-    uint8_t* raw_data_ptr = output.data.data();
+    
+    // 一時的なバッファにポイントを格納
+    std::vector<uint8_t> filtered_data;
+    filtered_data.reserve(output.point_step * msg->point_num);  // 最大サイズで予約
+    
+    uint32_t filtered_point_count = 0;
+    
     for (const auto& point : msg->points)
     {
-        *(reinterpret_cast<float*>(raw_data_ptr + 0)) = point.x;
-        *(reinterpret_cast<float*>(raw_data_ptr + 4)) = point.y;
-        *(reinterpret_cast<float*>(raw_data_ptr + 8)) = point.z;
-        *(reinterpret_cast<float*>(raw_data_ptr + 12)) = static_cast<float>(point.reflectivity);
-        *(raw_data_ptr + 16) = point.tag;
-        *(raw_data_ptr + 17) = point.line;
-
-        raw_data_ptr += output.point_step;
+        // 前方180度のデータのみをフィルタリング（X軸が正で、Y軸の絶対値がX軸以下の点）
+        if (point.x > 0.0f && std::abs(point.y) <= point.x)  // 前方約180度のデータ
+        {
+            uint8_t point_data[18];
+            
+            *(reinterpret_cast<float*>(point_data + 0)) = point.x;
+            *(reinterpret_cast<float*>(point_data + 4)) = point.y;
+            *(reinterpret_cast<float*>(point_data + 8)) = point.z;
+            *(reinterpret_cast<float*>(point_data + 12)) = static_cast<float>(point.reflectivity);
+            *(point_data + 16) = point.tag;
+            *(point_data + 17) = point.line;
+            
+            filtered_data.insert(filtered_data.end(), point_data, point_data + output.point_step);
+            filtered_point_count++;
+        }
     }
-
-    output.width = msg->point_num;
+    
+    // フィルタリングされたデータを出力に設定
+    output.data.resize(output.point_step * filtered_point_count);
+    std::copy(filtered_data.begin(), filtered_data.end(), output.data.begin());
+    
+    output.width = filtered_point_count;
     output.height = 1;
+    output.row_step = output.point_step * filtered_point_count;
     output.is_bigendian = false;
     output.is_dense = true;
 
