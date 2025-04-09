@@ -1,4 +1,6 @@
-name: ROS2 CI
+name: ROS2 CI ROS2のCI
+# This workflow builds and tests a ROS2 package using GitHub Actions.
+# このワークフローは、GitHub Actionsを使用してROS2パッケージをビルドおよびテストします。
 
 on:
   push:
@@ -23,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update && sudo apt install -y python3-colcon-common-extensions
-          sudo rosdep init || true
+          sudo - E rosdep init || true
           rosdep update
           rosdep install --from-paths src --ignore-src -r -y
 
