@@ -12,8 +12,14 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         (os.path.join('share', package_name, 'launch'), glob('launch/*.py')),
+<<<<<<< HEAD
         (os.path.join('share', package_name, 'param'), glob('param/*.yaml')),
         (os.path.join('share', package_name, 'maps'), glob('maps/*')),
+=======
+        (os.path.join('share', package_name,'config'), [f'param/navigation_param.yaml']),  
+        (os.path.join('share', package_name,'maps'), [f'maps/map.yaml']),  
+        (os.path.join('share', package_name,'maps'), [f'maps/map.pgm']),  
+>>>>>>> main
         ('share/' + package_name, ['package.xml']),
     ],
     install_requires=['setuptools'],
