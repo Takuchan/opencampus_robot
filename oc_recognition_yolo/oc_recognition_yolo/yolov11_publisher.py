@@ -6,16 +6,21 @@ from cv_bridge import CvBridge, CvBridgeError
 from ultralytics import YOLO
 import cv2
 import numpy as np
+
 # カスタムメッセージとサービスのインポート
 from oc_recognition_yolo_interfaces.msg import DetectedObjects
 from oc_recognition_yolo_interfaces.srv import CheckObjects, CheckPosition, SelectPerson
+
+# vision_msgs の検出用メッセージ
+from vision_msgs.msg import Detection2DArray, Detection2D, ObjectHypothesisWithPose, BoundingBox2D
+from geometry_msgs.msg import Pose2D, Vector2D
 
 class YoloDetector(Node):
     def __init__(self):
         super().__init__('yolo_detector')
         
         self.bridge = CvBridge()
-        self.model = YOLO("yolov8n.pt")
+        self.model = YOLO("yolo11n.pt")
         self.depth_image = None
         self.color_image = None
         self.latest_header = None
@@ -50,6 +55,12 @@ class YoloDetector(Node):
         self.objects_pub = self.create_publisher(
             DetectedObjects,
             '/detected/detected_objects',
+            10)
+        
+        # 新たに /yolo_detections トピックへのパブリッシャーを追加
+        self.yolo_detections_pub = self.create_publisher(
+            Detection2DArray,
+            '/detected/yolo_detections',
             10)
             
         # サービスの設定
@@ -218,6 +229,21 @@ class YoloDetector(Node):
         msg.confidences = [obj[2] for obj in self.current_detections]
         self.objects_pub.publish(msg)
 
+    def publish_vision_detections(self, detection_msgs):
+        """
+        vision_msgs を用いて Detection2DArray を生成し、/yolo_detections トピックに発行
+        """
+        detection_array = Detection2DArray()
+        # ヘッダは受信した画像のものを流用（なければ現在時刻を設定）
+        if self.latest_header is not None:
+            detection_array.header = self.latest_header
+        else:
+            from rclpy.clock import Clock
+            detection_array.header.stamp = Clock().now().to_msg()
+        detection_array.detections = detection_msgs
+        self.yolo_detections_pub.publish(detection_array)
+        self.get_logger().debug("Published vision_msgs detections on /yolo_detections")
+
     def process_images(self):
         if self.depth_image is None or self.color_image is None:
             return
@@ -229,6 +255,9 @@ class YoloDetector(Node):
             # 検出結果を格納するリストをクリア
             self.current_detections = []
             self.detected_persons = []
+            
+            # vision_msgs 用の検出結果リスト
+            vision_detections = []
 
             results = self.model(output_image)
             
@@ -266,22 +295,51 @@ class YoloDetector(Node):
 
                 # 描画処理
                 cv2.rectangle(output_image, 
-                            (x1, y1), 
-                            (x2, y2), 
-                            color, 2)
-                
+                              (x1, y1), 
+                              (x2, y2), 
+                              color, 2)
                 cv2.circle(output_image, (center_x, center_y), 5, color, -1)
-                
                 label = f"{class_name} Conf:{conf:.2f} Depth:{depth_value:.2f}m"
                 cv2.putText(output_image, label,
-                        (x1, y1 - 10),
-                        cv2.FONT_HERSHEY_PLAIN, 1, color, 1)
+                            (x1, y1 - 10),
+                            cv2.FONT_HERSHEY_PLAIN, 1, color, 1)
                 
-                # 検出結果をリストに追加
+                # 検出結果をリストに追加（カスタムメッセージ用）
                 self.current_detections.append([class_name, depth_value, confidence_score])
+                
+                # vision_msgs 用の Detection2D を生成
+                detection = Detection2D()
+                # ヘッダは各検出に付与（ここでは最新の画像ヘッダを流用）
+                if self.latest_header is not None:
+                    detection.header = self.latest_header
+                else:
+                    from rclpy.clock import Clock
+                    detection.header.stamp = Clock().now().to_msg()
+                # バウンディングボックス情報の設定
+                bbox = BoundingBox2D()
+                center = Pose2D()
+                center.x = float(center_x)
+                center.y = float(center_y)
+                center.theta = 0.0
+                bbox.center = center
+                size = Vector2D()
+                size.x = float(x2 - x1)
+                size.y = float(y2 - y1)
+                bbox.size = size
+                detection.bbox = bbox
+                # 検出結果（ObjectHypothesisWithPose）の設定
+                hypo = ObjectHypothesisWithPose()
+                hypo.id = class_name
+                hypo.score = float(conf)
+                # ※ pose は必須の場合に設定。ここでは不要であればデフォルト（0値）のままとする。
+                detection.results.append(hypo)
+                # vision_msgs の検出結果リストに追加
+                vision_detections.append(detection)
 
-            # 検出結果の公開
+            # 検出結果の公開（カスタムメッセージ）
             self.publish_detected_objects()
+            # vision_msgs 型の検出結果のパブリッシュ
+            self.publish_vision_detections(vision_detections)
 
             # 人物検出結果のデバッグ出力
             if self.detected_persons:
@@ -293,7 +351,7 @@ class YoloDetector(Node):
                         f"position=({person[0]}, {person[1]})"
                     )
 
-            # 画像の公開
+            # 画像の公開（検出結果描画済み）
             ros_image = self.bridge.cv2_to_imgmsg(output_image, "bgr8")
             ros_image.header = self.latest_header
             self.image_pub.publish(ros_image)
