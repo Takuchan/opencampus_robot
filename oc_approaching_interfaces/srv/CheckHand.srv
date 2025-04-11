@@ -1,0 +1,5 @@
+# Request
+sensor_msgs/Image image
+---
+# Response
+bool is_hand_raised
