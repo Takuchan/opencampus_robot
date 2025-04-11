@@ -10,8 +10,8 @@ LivoxToScan::LivoxToScan() : Node("livox_to_scan")
     max_z_ = 0.2f;     // Z軸の最大値 (m)
     
     // LaserScanのパラメータ設定 - 360度全周をカバー
-    angle_min_ = -M_PI;       // -180度
-    angle_max_ = M_PI;        // 180度
+    angle_min_ = -M_PI / 2;       // -180度
+    angle_max_ = M_PI / 2;        // 180度
     num_samples_ = 720;       // 分解能（サンプル数）- 0.5度ごと
     angle_increment_ = (angle_max_ - angle_min_) / static_cast<float>(num_samples_ - 1);
     
