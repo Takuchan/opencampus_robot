@@ -8,12 +8,15 @@ import cv2
 import numpy as np
 
 # カスタムメッセージとサービスのインポート
-from oc_recognition_yolo_interfaces.msg import DetectedObjects
+from oc_recognition_yolo_interfaces.msg import DetectedObjects,Vector2DYOLO
 from oc_recognition_yolo_interfaces.srv import CheckObjects, CheckPosition, SelectPerson
 
 # vision_msgs の検出用メッセージ
 from vision_msgs.msg import Detection2DArray, Detection2D, ObjectHypothesisWithPose, BoundingBox2D
-from geometry_msgs.msg import Pose2D, Vector2D
+from geometry_msgs.msg import Vector3
+from vision_msgs.msg import Pose2D  # 名前が被らないように別名で
+
+
 
 class YoloDetector(Node):
     def __init__(self):
@@ -318,19 +321,18 @@ class YoloDetector(Node):
                 # バウンディングボックス情報の設定
                 bbox = BoundingBox2D()
                 center = Pose2D()
-                center.x = float(center_x)
-                center.y = float(center_y)
+                center.position.x = float(center_x)
+                center.position.y = float(center_y)
                 center.theta = 0.0
                 bbox.center = center
-                size = Vector2D()
-                size.x = float(x2 - x1)
-                size.y = float(y2 - y1)
-                bbox.size = size
+                bbox.size_x = float(x2 - x1)
+                bbox.size_y = float(y2 - y1)
+
                 detection.bbox = bbox
                 # 検出結果（ObjectHypothesisWithPose）の設定
                 hypo = ObjectHypothesisWithPose()
-                hypo.id = class_name
-                hypo.score = float(conf)
+                hypo.hypothesis.class_id = class_name
+                hypo.hypothesis.score = float(conf)
                 # ※ pose は必須の場合に設定。ここでは不要であればデフォルト（0値）のままとする。
                 detection.results.append(hypo)
                 # vision_msgs の検出結果リストに追加

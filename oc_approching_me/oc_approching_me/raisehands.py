@@ -7,7 +7,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
 # 挙手判定サービスの例（実際には適宜サービス定義をインポートしてください）
-from oc_recognition_yolo.srv import CheckHand
+from oc_approaching_interfaces.srv import CheckHand
 
 class HandDetectionService(Node):
     def __init__(self):

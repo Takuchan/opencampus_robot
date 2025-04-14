@@ -71,9 +71,11 @@ class ApproachingPerson(Node):
         """
         persons = []
         for detection in msg.detections:
+            print("今の出てクションは",detection)
             # 仮に detection.results[0].id に物体ラベル（例："person"）が入っている前提
-            if detection.results and detection.results[0].id == "person":
-                persons.append(detection)
+            # if detection.results and detection.results[0].id == "person":
+            #     persons.append(detection)
+            
         # 現在時刻と person 検出リストをウィンドウに蓄積
         self.detection_window.append((self.get_clock().now().to_msg(), persons))
         self.get_logger().debug("Detection callback: {} person(s) detected.".format(len(persons)))
