@@ -15,7 +15,7 @@ class EmergencyStopNode(Node):
         super().__init__('emergency_stop_node')
         self.subscription = self.create_subscription(
             PointCloud2,
-            '/converted_pointcloud2',
+            '/livox/lidar/pcd2',
             self.pointcloud_callback,
             10
         )
@@ -31,6 +31,7 @@ class EmergencyStopNode(Node):
                 'sounds',
                 'uwabikkurishita.wav'
             )
+            self.get_logger().info(f"Path is {sound_path}")
             os.system(f"aplay {sound_path}")
             self.alert_played = True
 
@@ -70,10 +71,6 @@ class EmergencyStopNode(Node):
         self.get_logger().info("🟢 安全確認。ロボット再始動！")
         # ここでは再始動時の動きは止まったまま。必要に応じて速度を設定。
 
-    def play_alert_sound(self):
-        if not self.alert_played:
-            os.system("aplay uwabikkurishita.wav")  # 適切な音声ファイルのパスに変更
-            self.alert_played = True
 
 def main(args=None):
     rclpy.init(args=args)
