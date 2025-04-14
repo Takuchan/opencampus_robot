@@ -17,8 +17,9 @@ url_node2を確認する(今は不要）
 ros2 launch urg_node2 urg_node2.launch.py
 ```
 cmd_vel:=rover_twistに変更
+RealsenseのTFを設定する
 ```
-ros2 run oc_megarover_bringup bringup
+ros2 launch oc_megarover_bringup bringup
 ```
 TFを揃える
 ```
