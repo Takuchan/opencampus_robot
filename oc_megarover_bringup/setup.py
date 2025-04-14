@@ -12,8 +12,8 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         (os.path.join('share', package_name, 'launch'), glob('launch/*.py')),
-        (os.path.join('share', package_name,'config'), [f'param/nav2_params.yaml']),  
-        (os.path.join('share', package_name,'config'), [f'param/mapper_params_online_async.yaml']),  
+        (os.path.join('share', package_name,'param'), [f'param/nav2_params.yaml']),  
+        (os.path.join('share', package_name,'param'), [f'param/mapper_params_online_async.yaml']),  
         (os.path.join('share', package_name,'maps'), [f'maps/map.yaml']),  
         (os.path.join('share', package_name,'maps'), [f'maps/map.pgm']),  
         ('share/' + package_name, ['package.xml']),
@@ -27,7 +27,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'bringup = oc_megarover_bringup.bringup:main'
+            'bringup = oc_megarover_bringup.bringup:main',
             'realsensetfinit = oc_megarover_bringup.realsenseinittf:main'
         ],
     },

@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'approaching = oc_approching_me.approaching:main'
+            'approaching = oc_approching_me.approaching:main',
+            'raisehands = oc_approching_me.raisehands:main',
         ],
     },
 )

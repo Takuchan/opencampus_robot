@@ -25,8 +25,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/RecognitionList.srv"
   "srv/recognition_yolo/CheckObjects.srv"
   "srv/recognition_yolo/CheckPosition.srv"
-  "msgs/recognition_yolo/DetectedObjects.msg"
   "srv/recognition_yolo/SelectPerson.srv"
+  "msg/recognition_yolo/DetectedObjects.msg"
+  "msg/recognition_yolo/Vector2DYOLO.msg"
   DEPENDENCIES geometry_msgs action_msgs
 )
 ament_export_dependencies(rosidl_default_runtime)
