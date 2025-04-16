@@ -36,7 +36,11 @@ class YOLOMarkerPublisher(Node):
             10)
         
         # RViz上でマーカーを表示するためのパブリッシャー
-        self.marker_pub = self.create_publisher(Marker, 'visualization_marker', 10)
+        self.marker_pub = self.create_publisher(
+            Marker,
+            'visualization_marker',
+            10
+        )
         self.marker_id = 0  # 検出ごとに異なるIDを設定
         
     def detection_callback(self, msg: YOLODetection):
