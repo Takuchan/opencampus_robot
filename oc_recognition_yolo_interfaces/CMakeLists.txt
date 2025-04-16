@@ -29,8 +29,10 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/recognition_yolo/SelectPerson.srv"
   "msg/recognition_yolo/DetectedObjects.msg"
   "msg/recognition_yolo/Vector2DYOLO.msg"
+
   "msg/recognition_yolo/YOLODetection.msg"
   DEPENDENCIES std_msgs geometry_msgs action_msgs 
+
 )
 ament_export_dependencies(rosidl_default_runtime)
 
