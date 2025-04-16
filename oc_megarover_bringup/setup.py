@@ -28,7 +28,8 @@ setup(
     entry_points={
         'console_scripts': [
             'bringup = oc_megarover_bringup.bringup:main',
-            'realsensetfinit = oc_megarover_bringup.realsenseinittf:main'
+            'realsensetfinit = oc_megarover_bringup.realsenseinittf:main',
+            'point2nav2 = oc_megarover_bringup.point2nav2:main',
         ],
     },
 )
