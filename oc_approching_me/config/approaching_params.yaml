@@ -1,0 +1,14 @@
+approaching_person_node:
+  ros__parameters:
+    # 入力トピック
+    rgb_topic: "/camera/camera/color/image_raw"
+    yolo_topic: "/yolo_detection"
+    
+    # マーカー設定
+    marker_frame_id: "map"
+    
+    # アイドル状態の設定
+    idle_timeout: 30.0  # 秒単位
+    
+    # 音楽ファイルは launch で上書きされる
+    music_file: "/path/to/your/music.mp3"

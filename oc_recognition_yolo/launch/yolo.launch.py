@@ -19,15 +19,15 @@ def generate_launch_description():
                  "frame_id","realsense"
             ]
         ),
-        Node(
-            package='oc_recognition_yolo',         # DetectionVisualizerノードを含むパッケージ名に書き換え
-            executable='yolo_realsense_depth_publisher',     # ビルド時に生成された実行ファイル名
-            name='detection_visualizer',
-            output='screen',
-            parameters=[{
-                'camera_fov_deg': 90.0,                   # カメラの水平視野角（度単位）
-                'marker_topic': '/visualization_marker',  # RVizに表示するMarkerのトピック
-                'target_frame': 'base_footprint'          # TF変換先の座標系
-            }]
-        )
+        # Node(
+        #     package='oc_recognition_yolo',         # DetectionVisualizerノードを含むパッケージ名に書き換え
+        #     executable='yolo_realsense_depth_publisher',     # ビルド時に生成された実行ファイル名
+        #     name='detection_visualizer',
+        #     output='screen',
+        #     parameters=[{
+        #         'camera_fov_deg': 90.0,                   # カメラの水平視野角（度単位）
+        #         'marker_topic': '/visualization_marker',  # RVizに表示するMarkerのトピック
+        #         'target_frame': 'base_footprint'          # TF変換先の座標系
+        #     }]
+        # )
     ])

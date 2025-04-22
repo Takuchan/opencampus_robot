@@ -6,7 +6,6 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
-# 挙手判定サービスの例（実際には適宜サービス定義をインポートしてください）
 from oc_approaching_interfaces.srv import CheckHand
 
 class HandDetectionService(Node):
@@ -51,7 +50,7 @@ class HandDetectionService(Node):
         
         # 検出結果がなければFalseとする
         if not results.pose_landmarks:
-            self.get_logger().info("Pose検出失敗：ランドマークが検出されませんでした")
+            self.get_logger().warn("Pose検出失敗：ランドマークが検出されませんでした")
             response.is_hand_raised = False
             return response
         
@@ -69,10 +68,10 @@ class HandDetectionService(Node):
         right_hand_raised = right_wrist.y < right_shoulder.y
         
         if left_hand_raised or right_hand_raised:
-            self.get_logger().info("挙手が検出されました")
+            self.get_logger().info("🙆挙手が検出されました")
             response.is_hand_raised = True
         else:
-            self.get_logger().info("挙手は検出されませんでした")
+            self.get_logger().info("❌挙手は検出されませんでした")
             response.is_hand_raised = False
 
         return response
