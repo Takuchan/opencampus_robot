@@ -3,14 +3,12 @@
 
 import rclpy
 from rclpy.node import Node
-import rclpy.action                                      # ← 追加
-from rclpy.action import ActionClient                     # ← 追加
-from nav2_msgs.action import NavigateToPose               # ← 追加
-from geometry_msgs.msg import PoseStamped                 # ← 追加
+from rclpy.action import ActionClient                     
+from nav2_msgs.action import NavigateToPose               
+from geometry_msgs.msg import PoseStamped                 
 import time
 import cv2
 import numpy as np
-from threading import Thread
 import pygame
 from visualization_msgs.msg import Marker
 from std_srvs.srv import Trigger
@@ -25,6 +23,8 @@ from oc_tts_interfaces.srv import TTS
 import math
 import os 
 from ament_index_python.packages import get_package_share_directory
+
+from rclpy.executors import MultiThreadedExecutor
 
 
 class ApproachingPerson(Node):
@@ -48,7 +48,7 @@ class ApproachingPerson(Node):
         self.declare_parameter("vertical_fov_deg", 58.0)      # 垂直方向の画角（度）
         # マーカーの大きさ（球の直径）と表示時間（marker.lifetime）
         self.declare_parameter("marker_scale", 0.3)
-        self.declare_parameter("marker_lifetime_sec", 3.0)    # RViz上に残る時間（秒）
+        self.declare_parameter("marker_lifetime_sec", 130.0)    # RViz上に残る時間（秒）
         # マーカーの色（RGBA）
         self.declare_parameter("color_r", 1.0)
         self.declare_parameter("color_g", 0.0)
@@ -111,11 +111,7 @@ class ApproachingPerson(Node):
         self.hand_detection_client = self.create_client(CheckHand, '/hand_detection/check_hand')
         while not self.hand_detection_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('HandDetectionサービスを待機中...')
-        
-        # ナビゲーション実行用のクライアント
-        self.nav_client = self.create_client(Trigger, 'go_to_marker')
-        while not self.nav_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Navigationサービスを待機中...')
+
         
         # 音声合成クライアント
         self.tts_client = self.create_client(TTS, 'tts_service')
@@ -123,6 +119,7 @@ class ApproachingPerson(Node):
             self.get_logger().info('TTS サービスを待機中...')
         
         # 音楽プレーヤー初期化
+        pygame.init()
         pygame.mixer.init()
         
         # タイマー（待機状態でのアイドル発話用）
@@ -182,6 +179,10 @@ class ApproachingPerson(Node):
     
     def check_hand_raising(self, image, detection_msg):
         """手を挙げているか検出する"""
+       
+        if self.current_state != self.STATE_WAITING:
+            return
+       
         try:
             # 画像をROS Image形式に変換
             ros_image = self.bridge.cv2_to_imgmsg(image, encoding="bgr8")
@@ -208,6 +209,9 @@ class ApproachingPerson(Node):
                 
                 # 状態を移動中に変更
                 self.current_state = self.STATE_MOVING
+                
+                self.speak("手が挙がりました。これから移動を開始します。")
+                time.sleep(1.0)
                 
                 # マーカーを作成して発行
                 self.publish_marker(detection_msg)
@@ -323,18 +327,22 @@ class ApproachingPerson(Node):
 
     def navigation_result_callback(self, future):
         """移動アクション結果のコールバック"""
-        result = future.result().result
-        if result.success:
+        result_msg = future.result()
+        result = result_msg.result
+        status = result_msg.status  # ← ここが重要！
+
+        if status == 4:  # STATUS_SUCCEEDED
             self.get_logger().info('ナビゲーション完了！')
-            # 音楽停止
             self.stop_music()
-            # TTSで完了メッセージ
             self.speak("移動完了しました！")
         else:
-            self.get_logger().error(f'ナビゲーション失敗: {result}')
+            self.get_logger().error(f'ナビゲーション失敗: status={status}')
             self.stop_music()
 
-        # 状態を待機に戻してアイドルタイマーをリセット
+
+        self.get_logger().info('5秒後に次の検出を再開します...')
+
+
         self.current_state = self.STATE_WAITING
         self.last_activity_time = time.time()
 
@@ -399,7 +407,8 @@ class ApproachingPerson(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = ApproachingPerson()
-    
+    executor = MultiThreadedExecutor(num_threads=4)
+    executor.add_node(node)
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:

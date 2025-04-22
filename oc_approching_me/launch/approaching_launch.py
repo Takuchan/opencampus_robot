@@ -21,11 +21,11 @@ def generate_launch_description():
     
 
     # パラメータファイルの宣言
-    params_arg = DeclareLaunchArgument(
-        'params_file',
-        default_value=default_params_file,
-        description='Approaching node のパラメータファイルの完全なパス'
-    )
+    # params_arg = DeclareLaunchArgument(
+    #     'params_file',
+    #     default_value=default_params_file,
+    #     description='Approaching node のパラメータファイルの完全なパス'
+    # )
     default_music_file = os.path.join(
         get_package_share_directory('oc_approching_me'),
         'sounds',
@@ -74,13 +74,12 @@ def generate_launch_description():
         name='approaching_person_node',
         output='screen',
         parameters=[
-            LaunchConfiguration('params_file'),
             {'music_file': LaunchConfiguration('music_file')}
         ]
     )
     
     return LaunchDescription([
-        params_arg,
+        # params_arg,
         music_arg,
         yolo_node,
         hand_detection_node,
