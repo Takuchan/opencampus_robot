@@ -27,7 +27,7 @@ setup(
             'yolov11_publisher = oc_recognition_yolo.yolov11_publisher:main',
             'open3d_sample = oc_recognition_yolo.open3d_sample:main',
             'yolo_publisher = oc_recognition_yolo.yolo_publisher:main',
-            'yolo_realsense_depth_publisher = oc_recognition_yolo.yolo_realsense_depth_publisher:main',
+            'yolo_realsense_depth_publisher = oc_recognition_yolo.yolo_marker_publisher:main',
         ],
     },
 )

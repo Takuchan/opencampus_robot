@@ -19,7 +19,7 @@ ros2 launch urg_node2 urg_node2.launch.py
 cmd_vel:=rover_twistに変更
 RealsenseのTFを設定する
 ```
-ros2 launch oc_megarover_bringup bringup
+ros2 launch oc_megarover_bringup bringup.launch.py
 ```
 TFを揃える
 ```
@@ -35,6 +35,13 @@ ros2 launch realsense2_camera rs_align_depth_launch.py
 ```
 ros2 launch oc_recognition_yolo yolo.launch.py
 ```
+手を上げた人を認識
+```
+ros2 run oc_approching_me raisehands
+```
+``
+ros2 run oc_approching_me approachingme
+``` 
 
 YOLO+Realsenseのパッケージがすべて実行できた状態でのモジュール
 ```

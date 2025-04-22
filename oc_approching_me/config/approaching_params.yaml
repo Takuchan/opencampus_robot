@@ -10,5 +10,5 @@ approaching_person_node:
     # アイドル状態の設定
     idle_timeout: 30.0  # 秒単位
     
-    # 音楽ファイルは launch で上書きされる
-    music_file: "/path/to/your/music.mp3"
+    # # 音楽ファイルは launch で上書きされる
+    # music_file: "/path/to/your/music.mp3"

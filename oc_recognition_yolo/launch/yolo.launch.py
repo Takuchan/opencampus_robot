@@ -9,7 +9,7 @@ def generate_launch_description():
             package='oc_recognition_yolo',
             executable='yolo_publisher',
             name='yolo_publisher',
-            output='screen',
+            output='log',
             parameters=[
                 {"model_path": "yolo11n.pt",
                  "confidence_threshold": 0.5,

@@ -17,7 +17,6 @@ setup(
         # Config files
         (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
         # Resource files (like music)
-        (os.path.join('share', package_name, 'resources'), glob('resources/*')),
         (os.path.join('share', package_name, 'sounds'), glob('sounds/*.mp3')),
     ],
     install_requires=['setuptools'],
@@ -29,8 +28,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'approaching_person = oc_approching_me.approachingPerson:main',
+            'approaching_person = oc_approching_me.approachingperson:main',
             'raisehands = oc_approching_me.raisehands:main',
+            'raisehandsTest = oc_approching_me.raisehandTest:main',
         ],
     },
 )

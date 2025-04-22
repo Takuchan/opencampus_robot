@@ -11,18 +11,14 @@ from launch_ros.actions import Node
 def generate_launch_description():
     # ApproachingPerson のパッケージパスを取得
     pkg_approaching = get_package_share_directory('oc_approching_me')
-    
+
+    # TTSパッケージを取得
+    tts_pkg = get_package_share_directory('oc_tts')
+    default_params_file = os.path.join(pkg_approaching, 'config', 'approaching_params.yaml')
+
     # YOLO 認識のパッケージパスを取得
     pkg_yolo = get_package_share_directory('oc_recognition_yolo')
     
-    # パラメータファイルのパス
-    default_params_file = os.path.join(pkg_approaching, 'config', 'approaching_params.yaml')
-    
-    default_music_file = os.path.join(
-        get_package_share_directory('oc_approching_me'),
-        'sounds',
-        'runnning.mp3'
-    )
 
     # パラメータファイルの宣言
     params_arg = DeclareLaunchArgument(
@@ -30,7 +26,11 @@ def generate_launch_description():
         default_value=default_params_file,
         description='Approaching node のパラメータファイルの完全なパス'
     )
-    
+    default_music_file = os.path.join(
+        get_package_share_directory('oc_approching_me'),
+        'sounds',
+        'runnning.mp3'
+    )
     # 音楽ファイルパスの宣言
     music_arg = DeclareLaunchArgument(
         'music_file',
@@ -45,6 +45,12 @@ def generate_launch_description():
         )
     )
     
+    # TTSノードの起動
+    tts_node = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(tts_pkg,'launch','tts.launch.py')
+        )
+    )
     # 手検出サービスノード
     hand_detection_node = Node(
         package='oc_approching_me',
