@@ -32,20 +32,9 @@ YOLO+Realsenseのノードを実行する
 ros2 launch realsense2_camera rs_align_depth_launch.py 
 
 ```
+音声合成のDockerコンテナの起動
 ```
-ros2 launch oc_recognition_yolo yolo.launch.py
-```
-手を上げた人を認識
-```
-ros2 run oc_approching_me raisehands
-```
-``
-ros2 run oc_approching_me approachingme
-``` 
-
-YOLO+Realsenseのパッケージがすべて実行できた状態でのモジュール
-```
-ros2 run oc_megarover_bringup point2nav2
+ docker run --rm -p '10101:10101'   -v ~/.local/share/AivisSpeech-Engine:/home/user/.local/share/AivisSpeech-Engine-Dev   ghcr.io/aivis-project/aivisspeech-engine:cpu-latest
 ```
 ## マップ作成
 マップを作成したい場合

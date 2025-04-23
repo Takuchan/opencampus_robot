@@ -2,59 +2,72 @@
 import os
 import rclpy
 from rclpy.node import Node
-from oc_tts_interfaces.srv import TTS  # 先ほど定義したカスタムサービスをインポート
-from kokoro import KPipeline
-import soundfile as sf
+from oc_tts_interfaces.srv import TTS  # カスタムサービス
+import subprocess
 import simpleaudio as sa
-import torch
 
 class TTSServer(Node):
     def __init__(self):
         super().__init__('tts_server')
         self.srv = self.create_service(TTS, 'tts_service', self.tts_callback)
-        # 必要に応じて、lang_codeやvoiceの指定を変更してください
-        self.pipeline = KPipeline(lang_code='j')
         self.get_logger().info('TTSサービスサーバーが起動しました。')
-        
-        # ホームディレクトリ内に "tts_voice_tmp" ディレクトリを作成（存在しなければ）
+
+        # 音声保存用ディレクトリ
         self.home_dir = os.path.expanduser('~')
         self.save_dir = os.path.join(self.home_dir, 'tts_voice_tmp')
-        if not os.path.exists(self.save_dir):
-            os.makedirs(self.save_dir)
-            self.get_logger().info(f"ディレクトリ {self.save_dir} を作成しました。")
-        else:
-            self.get_logger().info(f"ディレクトリ {self.save_dir} が既に存在します。")
+        os.makedirs(self.save_dir, exist_ok=True)
+
+        # スピーカーIDを指定（VOICEVOXのものに合わせて変更可能）
+        self.speaker_id = 888753760
 
     def tts_callback(self, request, response):
         text = request.text
-        self.get_logger().info(f'受信テキスト: {text}')
+        self.get_logger().info(f"受信テキスト: {text}")
+
         try:
-            # Kokoroパイプラインで音声合成（ここでは最初のセグメントのみ利用）
-            generator = self.pipeline(text, voice='af_heart', speed=1.2, split_pattern=r'\n+')
-            audio_data = None
-            for i, (gs, ps, audio) in enumerate(generator):
-                audio_data = audio
-                break  # 複数セグメントの場合は適宜連結処理を追加してください
-            if audio_data is None:
-                raise Exception("音声生成に失敗しました。")
-            
-            # ホームディレクトリ内の "tts_voice_tmp" に音声ファイルを保存
-            wav_file = os.path.join(self.save_dir, 'tts_output.wav')
-            sf.write(wav_file, audio_data, 24000)
-            self.get_logger().info(f"音声ファイルを {wav_file} に保存しました。")
-            
-            # simpleaudioを利用して再生
-            wave_obj = sa.WaveObject.from_wave_file(wav_file)
+            # text.txt への書き込み
+            text_path = os.path.join(self.save_dir, "text.txt")
+            with open(text_path, "w", encoding="utf-8") as f:
+                f.write(text)
+
+            # クエリ生成と音声合成
+            query_path = os.path.join(self.save_dir, "query.json")
+            audio_path = os.path.join(self.save_dir, "tts_output.wav")
+
+            cmd_audio_query = [
+                "curl", "-s", "-X", "POST",
+                f"127.0.0.1:10101/audio_query?speaker={self.speaker_id}",
+                "--get", "--data-urlencode", f"text@{text_path}"
+            ]
+            query_json = subprocess.check_output(cmd_audio_query)
+
+            with open(query_path, "wb") as f:
+                f.write(query_json)
+
+            cmd_synthesis = [
+                "curl", "-s", "-H", "Content-Type: application/json",
+                "-X", "POST", "-d", f"@{query_path}",
+                f"127.0.0.1:10101/synthesis?speaker={self.speaker_id}"
+            ]
+            audio_wav = subprocess.check_output(cmd_synthesis)
+
+            with open(audio_path, "wb") as f:
+                f.write(audio_wav)
+
+            # 音声再生
+            wave_obj = sa.WaveObject.from_wave_file(audio_path)
             play_obj = wave_obj.play()
             play_obj.wait_done()
-            
+
             response.success = True
             response.message = "音声の再生に成功しました。"
         except Exception as e:
             self.get_logger().error(f"エラー発生: {e}")
             response.success = False
             response.message = str(e)
+
         return response
+
 
 def main(args=None):
     rclpy.init(args=args)
@@ -65,6 +78,7 @@ def main(args=None):
         pass
     node.destroy_node()
     rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()

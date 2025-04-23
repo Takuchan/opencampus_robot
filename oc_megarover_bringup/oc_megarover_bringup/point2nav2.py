@@ -1,108 +1,84 @@
+# marker_nav2_commander.py
 #!/usr/bin/env python3
 
 import rclpy
 from rclpy.node import Node
 import rclpy.action
 
-# Nav2の移動アクション
+from std_srvs.srv import Trigger
 from nav2_msgs.action import NavigateToPose
-# MarkerやPoseStampedのメッセージ
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import PoseStamped
-# サービスでGoサインを受け取るためのTriggerサービス
-from std_srvs.srv import Trigger
 
 class MarkerNav2Commander(Node):
     def __init__(self):
         super().__init__('marker_nav2_commander')
-        
-        # 最新のマーカー情報を格納する変数
-        self.latest_marker = None
-        
-        # visualization_markerトピックからマーカー情報を受信
-        self.marker_sub = self.create_subscription(
-            Marker,
-            'visualization_marker',
-            self.marker_callback,
-            10
-        )
-        
-        # NavigateToPoseアクションサーバへのアクションクライアント
-        self._action_client = rclpy.action.ActionClient(self, NavigateToPose, 'navigate_to_pose')
-        
-        # サービスを提供：TriggerサービスでGoサインが出たら移動開始
-        self.srv = self.create_service(Trigger, 'go_to_marker', self.handle_go_to_marker)
-        self.get_logger().info("MarkerNav2Commanderノードを開始しました。サービス『go_to_marker』の呼び出しで移動ゴールを送信します。")
-    
-    def marker_callback(self, msg: Marker):
-        """ visualization_markerから受信した最新のマーカー情報を保存 """
+        self.latest_marker: Marker = None
+
+        # マーカー購読
+        self.create_subscription(Marker, 'visualization_marker', self._marker_cb, 10)
+
+        # Trigger サービス
+        self.create_service(Trigger, 'go_to_marker', self._on_go_to_marker)
+
+        # Nav2 アクションクライアント
+        self._nav_client = rclpy.action.ActionClient(self, NavigateToPose, 'navigate_to_pose')
+
+        self.get_logger().info("MarkerNav2Commander ready. Call 'go_to_marker' to navigate.")
+
+    def _marker_cb(self, msg: Marker):
         self.latest_marker = msg
-        self.get_logger().info("受信マーカー id {}: 座標 [x: {:.2f}, y: {:.2f}, z: {:.2f}]".format(
-            msg.id, msg.pose.position.x, msg.pose.position.y, msg.pose.position.z
-        ))
-    
-    def handle_go_to_marker(self, request, response):
-        """
-        Goサイン（Triggerサービス）を受けたときに、
-        最新のマーカー情報をもとに移動ゴールを送信する
-        """
+        self.get_logger().debug(f"Received Marker @[{msg.pose.position.x:.2f}, {msg.pose.position.y:.2f}, {msg.pose.position.z:.2f}]")
+
+    def _on_go_to_marker(self, request, response):
         if self.latest_marker is None:
             response.success = False
-            response.message = "まだマーカー情報が受信されていません。"
-            self.get_logger().error("サービス要求失敗: マーカー未受信")
+            response.message = "マーカー未受信"
             return response
-        
-        # マーカーのヘッダーを使いPoseStampedを作成する
+
+        # PoseStamped に変換
         goal_pose = PoseStamped()
         goal_pose.header = self.latest_marker.header
-        goal_pose.pose = self.latest_marker.pose
-        
-        # Nav2のアクションサーバが立ち上がっているか待つ
-        if not self._action_client.wait_for_server(timeout_sec=5.0):
-            self.get_logger().error("ナビゲーションアクションサーバに接続できませんでした。")
+        goal_pose.pose   = self.latest_marker.pose
+
+        # サーバ待ち
+        if not self._nav_client.wait_for_server(timeout_sec=5.0):
             response.success = False
-            response.message = "ナビゲーションアクションサーバに接続できませんでした。"
+            response.message = "Nav2 action server unreachable"
             return response
-        
-        self.get_logger().info("マーカーの座標に向けて移動ゴールを送信します。")
-        goal_msg = NavigateToPose.Goal()
-        goal_msg.pose = goal_pose
-        
-        # 非同期でゴール送信
-        send_goal_future = self._action_client.send_goal_async(goal_msg)
-        send_goal_future.add_done_callback(self.goal_response_callback)
-        
+
+        # ゴール送信
+        goal = NavigateToPose.Goal()
+        goal.pose = goal_pose
+        send_fut = self._nav_client.send_goal_async(goal)
+        send_fut.add_done_callback(self._on_goal_response)
+
         response.success = True
-        response.message = "移動ゴールを送信しました。"
+        response.message = "ゴール送信済み"
         return response
-    
-    def goal_response_callback(self, future):
-        """ ゴール送信結果のコールバック """
-        goal_handle = future.result()
-        if not goal_handle.accepted:
-            self.get_logger().info("ナビゲーションゴールが拒否されました。")
+
+    def _on_goal_response(self, future):
+        handle = future.result()
+        if not handle.accepted:
+            self.get_logger().error("Goal was rejected")
             return
-        
-        self.get_logger().info("ナビゲーションゴールが受理されました。結果を待っています...")
-        result_future = goal_handle.get_result_async()
-        result_future.add_done_callback(self.get_result_callback)
-    
-    def get_result_callback(self, future):
-        """ ナビゲーション結果のコールバック """
+        self.get_logger().info("Goal accepted, waiting result...")
+        handle.get_result_async().add_done_callback(self._on_result)
+
+    def _on_result(self, future):
         result = future.result().result
-        self.get_logger().info("ナビゲーション結果: {}".format(result))
-        
+        self.get_logger().info(f"Navigation result: {result}")
+
 def main(args=None):
     rclpy.init(args=args)
     node = MarkerNav2Commander()
-    
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
-        node.get_logger().info("MarkerNav2Commanderノードを終了します。")
+        pass
     finally:
         node.destroy_node()
         rclpy.shutdown()
-    
+
 if __name__ == '__main__':
     main()

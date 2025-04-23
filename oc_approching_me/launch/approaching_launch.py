@@ -29,7 +29,7 @@ def generate_launch_description():
     default_music_file = os.path.join(
         get_package_share_directory('oc_approching_me'),
         'sounds',
-        'runnning.mp3'
+        'downloaded_audio.wav'
     )
     # 音楽ファイルパスの宣言
     music_arg = DeclareLaunchArgument(
@@ -56,7 +56,7 @@ def generate_launch_description():
         package='oc_approching_me',
         executable='raisehands',
         name='hand_detection_service',
-        output='screen'
+        output='log'
     )
     
     # TTS サービスノード
