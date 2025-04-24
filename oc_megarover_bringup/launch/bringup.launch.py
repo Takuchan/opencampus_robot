@@ -13,9 +13,9 @@ def generate_launch_description():
             executable='static_transform_publisher',
             name='tf_livox_publisher',
             arguments=[
-                '-0.1',    # X (meters)
+                '-0.25',    # X (meters)
                 '0.0',    # Y (meters)
-                '0.5',    # Z (meters) - 高さに合わせて調整
+                '0.58',    # Z (meters) - 高さに合わせて調整
                 '0',  # Roll (radians) ≒ 90度
                 '0',     # Pitch (radians)
                 '0',  # Yaw (radians) ≒ 180度  ←ここを追加！

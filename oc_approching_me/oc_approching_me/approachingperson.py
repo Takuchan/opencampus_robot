@@ -12,7 +12,7 @@ from rclpy.action import ActionClient
 from rclpy.executors import MultiThreadedExecutor
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped,PointStamped
 from visualization_msgs.msg import Marker
 
 from oc_recognition_yolo_interfaces.msg import YOLODetection
@@ -20,7 +20,9 @@ from oc_approaching_interfaces.srv import CheckHand
 from oc_tts_interfaces.srv import TTS
 from nav2_msgs.action import NavigateToPose
 from ament_index_python.packages import get_package_share_directory
+import tf2_geometry_msgs  # 必要: PointStamped 変換ヘルパ
 
+from rclpy.time import Duration, Time
 
 import tf2_ros
 from geometry_msgs.msg import TransformStamped
@@ -35,12 +37,16 @@ class ApproachingPerson(Node):
             'sounds', 'downloaded_audio.wav'
         )
 
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
         self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
 
         # ─── パラメータ宣言 ─────────────────────────
         self.declare_parameter("rgb_topic", "/camera/camera/color/image_raw")
         self.declare_parameter("yolo_topic", "/yolo_detection")
         self.declare_parameter("marker_frame_id", "map")
+        self.declare_parameter("camera_frame_id", "realsense")     # ★ 追加
+
         self.declare_parameter("idle_timeout", 30.0)
         self.declare_parameter("music_file", sound_path)
         self.declare_parameter("horizontal_fov_deg", 85.0)
@@ -67,6 +73,8 @@ class ApproachingPerson(Node):
         self.marker_lifetime      = self.get_parameter("marker_lifetime_sec").value
         self.frame_collect_count  = self.get_parameter("frame_collect_count").value
         self.max_position_deviation = self.get_parameter("max_position_deviation").value
+        self.camera_frame_id      = self.get_parameter("camera_frame_id").value  # ★ 追加
+
         # ────────────────────────────────────────
 
         # OpenCV ブリッジ
@@ -171,15 +179,23 @@ class ApproachingPerson(Node):
 
                 # 収集中のフレームを蓄積
                 if self.current_state == self.STATE_COLLECTING:
-                    cu = (detection_msg.startpoint.x + detection_msg.endpoint.x) * 0.5
-                    cv = (detection_msg.startpoint.y + detection_msg.endpoint.y) * 0.5
-                    fx = (detection_msg.width  * 0.5) / math.tan(self.h_fov * 0.5)
-                    fy = (detection_msg.height * 0.5) / math.tan(self.v_fov * 0.5)
-                    z  = detection_msg.depth
-                    x3 =  z
-                    y3 = -(cu - detection_msg.width * 0.5) * z / fx
-                    z3 = -(cv - detection_msg.height* 0.5) * z / fy
-                    self.collected_positions.append((x3, y3, z3))
+                    u = (detection_msg.startpoint.x + detection_msg.endpoint.x) * 0.5
+                    v = (detection_msg.startpoint.y + detection_msg.endpoint.y) * 0.5
+
+                    # 画像全体の幅高さを使って fx, fy を計算
+                    img_w = detection_msg.width
+                    img_h = detection_msg.height
+                    fx = (img_w * 0.5) / math.tan(self.h_fov * 0.5)
+                    fy = (img_h * 0.5) / math.tan(self.v_fov * 0.5)
+                    depth = detection_msg.depth  # ← Realsense の Z（前方向）[m]
+
+                    # ------ ROS2 カメラ座標系 (X:前, Y:左, Z:上) への逆投影 ------
+                    x_cam = depth
+                    y_cam = -(u - img_w * 0.5) * depth / fx   # 左が +Y
+                    z_cam = -(v - img_h * 0.5) * depth / fy    # 上が +Z
+                    # ----------------------------------------------------------------
+
+                    self.collected_positions.append((x_cam, y_cam, z_cam))
                     self.collect_count += 1
 
                     if self.collect_count >= self.frame_collect_count:
@@ -194,47 +210,87 @@ class ApproachingPerson(Node):
             self.get_logger().error(f'手検出コールバックエラー: {e}')
 
     def finish_collecting(self):
-        # データ確認
         if not self.collected_positions:
             self.current_state = self.STATE_WAITING
             return
 
         xs, ys, zs = zip(*self.collected_positions)
-        avg_x = sum(xs)/len(xs)
-        avg_y = sum(ys)/len(ys)
-        avg_z = sum(zs)/len(zs)
+        avg_x = sum(xs) / len(xs)
+        avg_y = sum(ys) / len(ys)
+        avg_z = sum(zs) / len(zs)
 
         # ばらつきチェック
-        deviations = [math.hypot(x-avg_x, y-avg_y) for x,y,_ in self.collected_positions]
+        deviations = [math.hypot(x - avg_x, y - avg_y) for x, y, _ in self.collected_positions]
         if max(deviations) > self.max_position_deviation or avg_x <= 0:
             self.speak("検出が安定しなかったので中止します")
             self.current_state = self.STATE_WAITING
             return
 
+
+
+        # ゴール設定
+        ps_cam = PointStamped()
+        ps_cam.header.frame_id = self.camera_frame_id
+        ps_cam.header.stamp = Time(seconds=0).to_msg()   # ← 常に最新 TF を使わせる
+
+        ps_cam.point.x = avg_x
+        ps_cam.point.y = avg_y
+        ps_cam.point.z = avg_z
+
+        try:
+            ps_map = self.tf_buffer.transform(
+                ps_cam,
+                self.marker_frame_id,
+                timeout=Duration(seconds=0.5)
+            )
+        except Exception as e:
+            self.get_logger().error(f'TF 変換失敗: {e}')
+            self.current_state = self.STATE_WAITING
+            return
         # 移動前発話＋待機
         self.speak("移動します")
         time.sleep(3.0)
 
-        # ゴール設定
+         # ---- Nav2 ゴール PoseStamped（map 座標系） ----
         goal = PoseStamped()
         goal.header.frame_id = self.marker_frame_id
         goal.header.stamp = self.get_clock().now().to_msg()
-        goal.pose.position.x = avg_x
-        goal.pose.position.y = avg_y
-        goal.pose.position.z = avg_z
+        goal.pose.position.x = ps_map.point.x
+        goal.pose.position.y = ps_map.point.y
+        goal.pose.position.z = 0.0              # Nav2 は 2D
         goal.pose.orientation.w = 1.0
         self.latest_goal_pose = goal
 
+        # 目印用 TF と Marker
         t = TransformStamped()
         t.header.stamp = self.get_clock().now().to_msg()
-        t.header.frame_id = self.marker_frame_id    # "map"
+        t.header.frame_id = self.marker_frame_id
         t.child_frame_id  = "goal_frame"
-        t.transform.translation.x = avg_x
-        t.transform.translation.y = avg_y
-        t.transform.translation.z = avg_z
+        t.transform.translation.x = ps_map.point.x
+        t.transform.translation.y = ps_map.point.y
+        t.transform.translation.z = ps_map.point.z
         t.transform.rotation.w    = 1.0
-        # ブロードキャスト
         self.tf_broadcaster.sendTransform(t)
+        # 可視化マーカー
+        marker = Marker()
+        marker.header.frame_id = self.marker_frame_id
+        marker.header.stamp = t.header.stamp
+        marker.ns = "goal_marker"
+        marker.id = 0
+        marker.type = Marker.SPHERE
+        marker.action = Marker.ADD
+        marker.pose.position.x = ps_map.point.x
+        marker.pose.position.y = ps_map.point.y
+        marker.pose.position.z = ps_map.point.z
+        marker.scale.x = self.marker_scale
+        marker.scale.y = self.marker_scale
+        marker.scale.z = self.marker_scale
+        marker.color.r = self.get_parameter("color_r").value
+        marker.color.g = self.get_parameter("color_g").value
+        marker.color.b = self.get_parameter("color_b").value
+        marker.color.a = self.get_parameter("color_a").value
+        marker.lifetime = rclpy.duration.Duration(seconds=self.marker_lifetime).to_msg()
+        self.marker_pub.publish(marker)
 
         self.play_music()
         self.navigate_to_person()
@@ -305,4 +361,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-3
