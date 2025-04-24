@@ -6,76 +6,93 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
-# 挙手判定サービスの例（実際には適宜サービス定義をインポートしてください）
 from oc_approaching_interfaces.srv import CheckHand
+
 
 class HandDetectionService(Node):
     def __init__(self):
         super().__init__('hand_detection_service')
-        
+
         # サービスサーバーの作成
-        self.srv = self.create_service(CheckHand, '/hand_detection/check_hand', self.handle_check_hand)
-        
+        self.srv = self.create_service(
+            CheckHand,
+            '/hand_detection/check_hand',
+            self.handle_check_hand
+        )
+
         # CvBridgeの初期化
         self.bridge = CvBridge()
-        
+
         # MediaPipe Pose の初期化
         self.mp_pose = mp.solutions.pose
-        self.pose = self.mp_pose.Pose(min_detection_confidence=0.5,
-                                       min_tracking_confidence=0.5)
-        
+        self.pose = self.mp_pose.Pose(
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.5
+        )
+
         self.get_logger().info("Hand detection service is ready.")
 
     def handle_check_hand(self, request, response):
         """
-        サービスリクエストで渡された画像からPose検出を行い、
-        左右の手首がそれぞれ対応する肩より上にあるか判定して、手挙げをチェックする。
-        ※ 画像中ではy座標が小さいほど上部となるため、例えば
-          left_wrist.y < left_shoulder.y なら左手が上がっていると判断する。
+        Poseランドマークから、直立して手を挙げているかを精度高く判定
+        - 肩より手首が十分上にある
+        - 肘も肩より上にある
+        - 手首が頭（鼻）よりも上にある
         """
+        # 画像変換
         try:
-            # ROS ImageメッセージからOpenCV画像（BGR）へ変換
             image = self.bridge.imgmsg_to_cv2(request.image, desired_encoding="bgr8")
         except CvBridgeError as e:
             self.get_logger().error(f"画像変換エラー: {e}")
             response.is_hand_raised = False
             return response
 
-        # 画像処理の前に書き込みフラグをFalseに設定（効率化のため）
-        image.flags.writeable = False
-        # BGR→RGBに変換（MediaPipeはRGB画像を前提）
+        # MediaPipe は RGB 前提
         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        
-        # MediaPipe Pose による検出
+        image_rgb.flags.writeable = False
         results = self.pose.process(image_rgb)
-        
-        # 検出結果がなければFalseとする
+
         if not results.pose_landmarks:
-            self.get_logger().info("Pose検出失敗：ランドマークが検出されませんでした")
+            self.get_logger().warn("Pose検出失敗：ランドマークが検出されませんでした")
             response.is_hand_raised = False
             return response
-        
-        # ランドマークの抽出（normalized座標: 0〜1, x,y）
-        landmarks = results.pose_landmarks.landmark
-        
-        # 左肩: 11, 右肩: 12, 左手首: 15, 右手首: 16  (MediaPipe Poseの仕様)
-        left_shoulder = landmarks[11]
-        right_shoulder = landmarks[12]
-        left_wrist = landmarks[15]
-        right_wrist = landmarks[16]
-        
-        # 左右それぞれにおいて、手首のy座標が肩のy座標より小さい（＝上にある）かを判定
-        left_hand_raised = left_wrist.y < left_shoulder.y
-        right_hand_raised = right_wrist.y < right_shoulder.y
-        
+
+        # 各ランドマークを取得
+        lm = results.pose_landmarks.landmark
+        # インデックス参照（MediaPipe Pose）
+        nose         = lm[0]
+        left_sh      = lm[11]
+        right_sh     = lm[12]
+        left_elb     = lm[13]
+        right_elb    = lm[14]
+        left_wrist   = lm[15]
+        right_wrist  = lm[16]
+
+        # 閾値（画像高さの割合）
+        margin_shoulder = 0.10  # 肩より10%上
+        margin_head     = 0.02  # 鼻より2%上
+
+        # 左手判定
+        left_wrist_above_sh = left_wrist.y < (left_sh.y - margin_shoulder)
+        left_elbow_above_sh = left_elb.y  < (left_sh.y - margin_shoulder / 2)
+        left_wrist_above_head = left_wrist.y < (nose.y - margin_head)
+        left_hand_raised = left_wrist_above_sh and left_elbow_above_sh and left_wrist_above_head
+
+        # 右手判定
+        right_wrist_above_sh = right_wrist.y < (right_sh.y - margin_shoulder)
+        right_elbow_above_sh = right_elb.y  < (right_sh.y - margin_shoulder / 2)
+        right_wrist_above_head = right_wrist.y < (nose.y - margin_head)
+        right_hand_raised = right_wrist_above_sh and right_elbow_above_sh and right_wrist_above_head
+
         if left_hand_raised or right_hand_raised:
-            self.get_logger().info("挙手が検出されました")
+            self.get_logger().info("🙆‍♂️ 挙手が検出されました")
             response.is_hand_raised = True
         else:
-            self.get_logger().info("挙手は検出されませんでした")
+            self.get_logger().info("❌ 挙手は検出されませんでした")
             response.is_hand_raised = False
 
         return response
+
 
 def main(args=None):
     rclpy.init(args=args)
@@ -87,6 +104,7 @@ def main(args=None):
     finally:
         node.destroy_node()
         rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()
