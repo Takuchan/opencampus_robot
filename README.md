@@ -2,7 +2,7 @@
 
 | 完成図 | カメラ | LiDAR | 台車 | PC | 電源 |
 |:---|:---|:---|:---|:---|:---|
-| <img src="https://github.com/user-attachments/assets/86b69489-43be-4f11-a376-a5b328aca8e0" width="30%"> | Realsense D455 | Livox MID360 | メガローバーVer3 | Dell Inspiron 5310 | 鉛蓄電池24V＋拡張電源基盤（LiDAR電源供給） |
+| <img src="https://github.com/user-attachments/assets/86b69489-43be-4f11-a376-a5b328aca8e0"> | Realsense D455 | Livox MID360 | メガローバーVer3 | Dell Inspiron 5310 | 鉛蓄電池24V＋拡張電源基盤（LiDAR電源供給） |
 
 ![挙手検出と自動接近が可能なAI会話ロボット](https://github.com/user-attachments/assets/519200eb-dc76-4420-aca6-6ced097f531e)
 
