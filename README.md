@@ -36,7 +36,7 @@ colcon build --symlink-install
 -   ドライバ: [urg_node2](https://github.com/Hokuyo-aut/urg_node2) を使用してください。
 -   シリアル通信に切り替えるため、`urg_node2` の `README.md` の手順に従って設定変更してください。
 -   `urg_node2` の `config/params_serial.yaml` にて、測定範囲を半円（`angle_max: 3.14` → `angle_max: 1.57` など）に変更することを検討してください（ロボット前方のみ使用する場合）。
--   Nav2利用時には、コストマップ設定ファイル (`oc_megarover_bringup/param/nav2_params.yaml` 内の `scan` トピック設定) で `frame_id` がLiDARのフレーム名（例: `laser` や `hokuyo_link`）と一致しているか確認してください。
+-   Nav2利用時には、コストマップ設定ファイル (`oc_megarover_bringup/param/nav2_params.yaml` 内の `scan` トピック設定) で `frame_id` がLiDARのフレーム名（"mid360"）と一致しているか確認してください。これを一致させないとNavigation2は利用できません。
 
 ### Realsense D455を使用する場合
 -   ドライバ: [Realsense-ROS公式リポジトリ](https://github.com/IntelRealSense/realsense-ros) を参考にセットアップしてください。
