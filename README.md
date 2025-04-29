@@ -1,5 +1,6 @@
 # OpenCampus Robot プロジェクト
-
+OSS: MIT License
+Takuchan
 ## 概要
 
 | 完成図 | カメラ | LiDAR | 台車 | PC | 電源 |
