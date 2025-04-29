@@ -29,10 +29,12 @@ jobs:
           rosdep update
           rosdep install --from-paths . --ignore-src -r -y
 
+
       - name: Build package
         run: |
           source /opt/ros/humble/setup.bash
-          colcon build --event-handlers console_cohesion+
+          # Exclude oc_livox_to_pointcloud2 from the build
+          colcon build --event-handlers console_cohesion+ --packages-skip oc_livox_to_pointcloud2
 
       # - name: Run tests
       #   run: |

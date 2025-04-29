@@ -1,30 +1,50 @@
 # oc_danger_detection
 
-このパッケージは、OpenCampus Robotプロジェクトの危険検知モジュールです。センサーデータを使用して周囲の危険を検出し、適切な警告を生成します。
+Written by Gemini2.5 pro → check Takuchan
+## 概要
+
+このパッケージは、OpenCampus Robotプロジェクトの危険検知モジュールです。センサーデータを使用してロボット前方の危険（特に人物）を検出し、ロボットを停止させるなどの対応を行います。
 
 ## 機能
 
-- 障害物検知
-- 衝突予測
-- 危険通知アラート
+-   センサーデータ（例：LiDARスキャン）を購読します。
+-   ロボット前方の近距離に障害物（特に人物と想定）が存在するかどうかを検出します。
+-   危険が検出された場合、ロボットを停止させるための速度コマンド（Twistメッセージ）を発行します。
+-   (将来的な機能) 衝突予測や危険通知アラート。
 
-## 依存関係
+## トピックとサービス
 
-- ROS 2 (Humble推奨)
-- sensor_msgs
-- std_msgs
-- geometry_msgs
+| 種別         | 名前       | 型                          | 説明                                                     |
+| :----------- | :--------- | :-------------------------- | :------------------------------------------------------- |
+| Subscription | `/scan`    | `sensor_msgs/msg/LaserScan` | 障害物検出のための入力センサーデータ（実装によりトピック名は異なる可能性あり） |
+| Publication  | `/cmd_vel` | `geometry_msgs/msg/Twist`   | 危険検出時にロボットを停止させるためのゼロ速度コマンド（トピック名は異なる可能性あり） |
 
-## インストール方法
+## 事前準備
 
-```bash
-colcon build --packages-select oc_danger_detection
-```
+-   センサーノード（例：LiDAR）が実行中で、購読するトピック（例：`/scan`）にデータをパブリッシュしている必要があります。
+-   ロボットのモーションコントロールシステムが速度指令トピック（例：`/cmd_vel`）を購読している必要があります。
 
 ## 使用方法
 
-以下のコマンドでノードを起動します：
+以下のコマンドでノードを起動します:
 
 ```bash
-ros2 run oc_danger_detection stopfrontperson.py
+# Pythonスクリプトからの実行ファイル名が 'stopfrontperson' 
+ros2 run oc_danger_detection stopfrontperson
 ```
+
+
+## テスト
+
+標準的なROS 2リンター（copyright, pep257）が設定されています。テストは以下のコマンドで実行します:
+
+```bash
+# 注意: セットアップでパッケージ名が実際に 'oc_denger_detection' の場合は調整してください
+colcon test --packages-select oc_danger_detection
+colcon test-result --all
+```
+
+## その他
+
+-   具体的な実装詳細（検出アルゴリズム、距離閾値など）は `stopfrontperson.py` スクリプト内にあります（入力には含まれていません）。
+-   正確な前方検出のために、ノード内で座標フレームとセンサーの向きが正しく処理されていることを確認してください。
