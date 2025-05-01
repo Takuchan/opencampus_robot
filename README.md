@@ -15,7 +15,7 @@ Takuchan
 
 # 事前準備
 
-本リポジトリ `opencampus_robot` を、ROS 2ワークスペースの `src` ディレクトリ（例：`~/ros2_ws/src`）にクローンし、ワークスペースのルート（例：`~/ros2_ws`）で `colcon build` を実行してください。
+本リポジトリ `opencampus_robot` を、ROS 2ワークスペースの `src` ディレクトリ（例：`~/ros2_ws/src`）にクローンし、ワークスペースのルート（例：`~/ros2_ws`）で `colcon build` を実行してください。`colcon build`を実行してもエラーが出る場合は次セクションのハードウェア関連ドライバ・設定を行なってください。
 
 ```bash
 cd ~/ros2_ws/src
