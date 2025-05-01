@@ -21,7 +21,7 @@ Takuchan
 cd ~/ros2_ws/src
 git clone <リポジトリURL> opencampus_robot
 cd ~/ros2_ws
-colcon build --symlink-install
+colcon build
 ```
 
 動作には以下の外部ライブラリやハードウェアセットアップが必要です。
