@@ -103,9 +103,6 @@ ros2 launch oc_livox_to_pointcloud2 livox_converter.launch.py
 ```bash
 # ドライバ起動 (シリアル設定済みと仮定)
 ros2 launch urg_node2 urg_node2.launch.py
-# TF発行 (oc_livox_to_pointcloud2 の launch ファイルを流用または別途設定)
-# 例: ros2 run tf2_ros static_transform_publisher 0.2 0 0.3 0 0 0 base_footprint laser
-# 上記の座標 (0.2 0 0.3) は実際の取り付け位置に合わせてください
 ```
 
 ## 4. 台車制御用ノード + Realsense TF設定起動
@@ -122,13 +119,13 @@ SLAMやAMCLが起動するまで、`map` フレームと `odom` フレームを�
 ```bash
 ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 map odom
 ```
-*注意: SLAM ToolboxやNav2 (AMCL) が起動すると、これらのノードが `map` -> `odom` のTFを提供するようになります。この静的TF発行は、それらが起動するまでの仮設定、またはSLAM Toolboxのマッピングモードで初期位置を固定するために使用します。*
+*注意: SLAM ToolboxやNav2 (AMCL) が起動すると、これらのノードが `map` -> `odom` のTFの親子関係を提供するようになります。この静的TF発行は、それらが起動するまでの仮設定、またはSLAM Toolboxのマッピングモードで初期位置を固定するために使用します。*
 
 ## 6. Realsenseカメラノード起動
 
 ```bash
 # カラー画像と位置合わせされた深度画像をパブリッシュ
-ros2 launch realsense2_camera rs_ali・・・・
+ros2 launch realsense2_camera rs_ali・・・・（ごめん、忘れちゃった。TABで補完して❤️）
 ```
 
 ## 7. YOLO物体検出ノード起動
@@ -157,16 +154,17 @@ ros2 launch slam_toolbox online_async_launch.py params_file:=$(ros2 pkg prefix o
 
 **マップの保存:**
 ```bash
-# マッピング完了後、マップを保存 (ファイル名は任意、例: my_map)
-ros2 run nav2_map_server map_saver_cli -f ~/my_map
+# マッピング完了後、マップを保存 (ファイル名必ず**map**にする。)
+ros2 run nav2_map_server map_saver_cli -f ~/map
 ```
-*保存された `my_map.yaml` と `my_map.pgm` を `oc_megarover_bringup/maps/` ディレクトリにコピーし、`oc_megarover_bringup/maps/map.yaml` の内容を `my_map.yaml` の内容で更新（またはファイル名を `map.yaml`, `map.pgm` に変更）してください。*
+*保存された `map.yaml` と `map.pgm` を `oc_megarover_bringup/maps/` ディレクトリにコピーし、`oc_megarover_bringup/maps/map.yaml` の内容を `map.yaml` の内容で更新（またはファイル名を `map.yaml`, `map.pgm` に変更）してください。*
+そしてcolcon build, source ~/.bashrcを忘れずに！
 
 ### B. ナビゲーション (Nav2) - 既存マップを使用する場合
 
 ```bash
 # Nav2 スタックを起動 (oc_megarover_bringup/maps/map.yaml を使用)
-ros2 launch oc_megarover_bringup nav2_with_map_launch.py use_sim_time:=false map:=$(ros2 pkg prefix oc_megarover_bringup)/share/oc_megarover_bringup/maps/map.yaml
+ros2 launch oc_megarover_bringup nav2_with_map_launch.py 
 ```
 *RVizが起動し、地図上にロボットが表示されます。「Nav2 Goal」ツールで目標地点を指定すると、ロボットが自律移動を開始します。初期位置がずれている場合は、「Initial Pose」ツールで現在位置を指定してください。*
 
