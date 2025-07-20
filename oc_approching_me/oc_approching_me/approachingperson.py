@@ -32,10 +32,8 @@ class ApproachingPerson(Node):
         super().__init__('approaching_person_node')
 
         # サウンドファイル
-        sound_path = os.path.join(
-            get_package_share_directory('oc_approching_me'),
-            'sounds', 'downloaded_audio.wav'
-        )
+        sound_path = "/home/tk/ros2_ws/src/opencampus_robot/oc_approching_me/sounds/downloaded_audio.wav"
+
 
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
@@ -221,10 +219,10 @@ class ApproachingPerson(Node):
 
         # ばらつきチェック
         deviations = [math.hypot(x - avg_x, y - avg_y) for x, y, _ in self.collected_positions]
-        if max(deviations) > self.max_position_deviation or avg_x <= 0:
-            self.speak("検出が安定しなかったので中止します")
-            self.current_state = self.STATE_WAITING
-            return
+        # if max(deviations) > self.max_position_deviation or avg_x <= 0:
+        #     self.speak("検出が安定しなかったので中止します")
+        #     self.current_state = self.STATE_WAITING
+        #     return
 
 
 
@@ -248,7 +246,7 @@ class ApproachingPerson(Node):
             self.current_state = self.STATE_WAITING
             return
         # 移動前発話＋待機
-        self.speak("移動します")
+        self.speak("いまからいっきまぁーす！")
         time.sleep(3.0)
 
          # ---- Nav2 ゴール PoseStamped（map 座標系） ----
@@ -312,7 +310,7 @@ class ApproachingPerson(Node):
         status = future.result().status
         self.stop_music()
         if status == 4:
-            self.speak("移動完了しました！")
+            self.speak("きたよ！どうしたの？")
         self.current_state = self.STATE_WAITING
         self.last_activity_time = time.time()
 
@@ -336,7 +334,7 @@ class ApproachingPerson(Node):
     def check_idle_state(self):
         if self.current_state == self.STATE_WAITING and \
            time.time() - self.last_activity_time > self.idle_timeout:
-            self.speak("手を挙げていただくと、そちらに向かいます。")
+            self.speak("手を上げたらそっちに行くよ！")
             self.last_activity_time = time.time()
 
     def speak(self, text):

@@ -26,11 +26,7 @@ def generate_launch_description():
     #     default_value=default_params_file,
     #     description='Approaching node のパラメータファイルの完全なパス'
     # )
-    default_music_file = os.path.join(
-        get_package_share_directory('oc_approching_me'),
-        'sounds',
-        'downloaded_audio.wav'
-    )
+    default_music_file = "/home/tk/ros2_ws/src/opencampus_robot/oc_approching_me/sounds/downloaded_audio.wav"
     # 音楽ファイルパスの宣言
     music_arg = DeclareLaunchArgument(
         'music_file',

@@ -88,7 +88,6 @@ ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0 -v4
 ```bash
 ros2 launch megarover3_bringup robot.launch.py
 ```
-
 ## 3. LiDARドライバと変換ノード起動
 
 ### MID360 の場合
@@ -104,6 +103,17 @@ ros2 launch oc_livox_to_pointcloud2 livox_converter.launch.py
 # ドライバ起動 (シリアル設定済みと仮定)
 ros2 launch urg_node2 urg_node2.launch.py
 ```
+
+cmd_vel:=rover_twistに変更
+RealsenseのTFを設定する
+```
+ros2 launch oc_megarover_bringup bringup.launch.py
+```
+TFを揃える
+```
+ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 map odom
+```
+
 
 ## 4. 台車制御用ノード + Realsense TF設定起動
 

@@ -14,7 +14,7 @@ def generate_launch_description():
             name='tf_livox_publisher',
             arguments=[
                 '-0.25',    # X (meters)
-                '0.0',    # Y (meters)
+                '0.1',    # Y (meters)
                 '0.58',    # Z (meters) - 高さに合わせて調整
                 '0',  # Roll (radians) ≒ 90度
                 '0',     # Pitch (radians)
