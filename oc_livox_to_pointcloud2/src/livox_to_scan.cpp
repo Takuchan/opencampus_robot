@@ -7,12 +7,13 @@ LivoxToScan::LivoxToScan() : Node("livox_to_scan")
 {
     // パラメータの設定
     min_z_ = 0.0f;  // Z軸の最小値 (m)
-    max_z_ = 0.2f;     // Z軸の最大値 (m)
+    max_z_ = 0.1f;     // Z軸の最大値 (m)
     
     // LaserScanのパラメータ設定 - 360度全周をカバー
-    angle_min_ = -M_PI / 2;       // -180度
-    angle_max_ = M_PI / 2;        // 180度
-    num_samples_ = 720;       // 分解能（サンプル数）- 0.5度ごと
+    // LaserScanのパラメータ設定 - 360度全周をカバー (このコメントは変更推奨)
+    angle_min_ = -M_PI * (95.0 / 180.0);       // -95度
+    angle_max_ = M_PI * (95.0 / 180.0);        // 95度
+    num_samples_ = 381;       // 分解能（サンプル数）- 約0.5度ごと
     angle_increment_ = (angle_max_ - angle_min_) / static_cast<float>(num_samples_ - 1);
     
     publisher_ = this->create_publisher<sensor_msgs::msg::LaserScan>("scan", 10);
@@ -30,7 +31,7 @@ void LivoxToScan::callback(const livox_ros_driver2::msg::CustomMsg::SharedPtr ms
     scan_msg.angle_max = angle_max_;
     scan_msg.angle_increment = angle_increment_;
     scan_msg.time_increment = 0.0;
-    scan_msg.scan_time = 0.1;  // 10Hz想定
+    scan_msg.scan_time = 0.3;  // 10Hz想定
     scan_msg.range_min = 0.1;  // 最小測定距離 (m)
     scan_msg.range_max = 200.0;  // 最大測定距離 (m)
     

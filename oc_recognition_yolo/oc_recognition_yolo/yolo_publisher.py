@@ -18,7 +18,7 @@ class YoloDepthDetector(Node):
         super().__init__('yolo_depth_detector')
         # パラメータ宣言（launchファイルからの上書き可能）
         self.declare_parameter("model_path", "yolo11n.pt")
-        self.declare_parameter("confidence_threshold", 0.5)
+        self.declare_parameter("confidence_threshold", 0.4)
         self.declare_parameter("target_class", "person")
         self.declare_parameter("rgb_topic", "/camera/camera/color/image_raw")
         self.declare_parameter("depth_topic", "/camera/camera/aligned_depth_to_color/image_raw")

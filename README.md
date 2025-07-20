@@ -10,7 +10,7 @@ ros2 launch megarover3_bringup robot.launch.py
 ros2 launch livox_ros_driver2 msg_MID360_launch.py 
 ```
 ```
-ros2 launch oc_livox_to_pointcloud2 livox_converter.launch.py
+   ros2 launch oc_livox_to_pointcloud2 livox_converter.launch.py
 ```
 url_node2を確認する(今は不要）
 ```
@@ -23,8 +23,7 @@ ros2 launch oc_megarover_bringup bringup.launch.py
 ```
 TFを揃える
 ```
-ros2 run tf2_ros static_transform_publisher \
-  0 0 0 0 0 0 map odom
+ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 map odom
 ```
 
 YOLO+Realsenseのノードを実行する
