@@ -104,16 +104,6 @@ ros2 launch oc_livox_to_pointcloud2 livox_converter.launch.py
 ros2 launch urg_node2 urg_node2.launch.py
 ```
 
-cmd_vel:=rover_twistに変更
-RealsenseのTFを設定する
-```
-ros2 launch oc_megarover_bringup bringup.launch.py
-```
-TFを揃える
-```
-ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 map odom
-```
-
 
 ## 4. 台車制御用ノード + Realsense TF設定起動
 
